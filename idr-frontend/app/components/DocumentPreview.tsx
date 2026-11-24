@@ -18,5 +18,13 @@ export default function DocumentPreview({ id, admin = false }: { id: string; adm
   }, [id, admin]);
   if (error) return <p role="alert" className="feedback-error">{error}</p>;
   if (!url) return <p role="status">Loading document preview…</p>;
+  // Phone browsers (Chrome on Android in particular) cannot show a PDF inside
+  // the page and leave the frame blank, so offer to open it full screen instead.
+  if (typeof navigator !== "undefined" && navigator.pdfViewerEnabled === false) {
+    return <div className="paper-preview-mobile">
+      <p>Your phone&apos;s browser can&apos;t show PDFs inside the page.</p>
+      <a className="repo-button primary" href={url} target="_blank" rel="noopener">Open the PDF</a>
+    </div>;
+  }
   return <iframe className="paper-preview" title="Document preview" src={url} />;
 }

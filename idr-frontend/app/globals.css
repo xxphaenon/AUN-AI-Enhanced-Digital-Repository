@@ -2965,3 +2965,32 @@ main input, main select, main textarea,
 .upload-progress-text strong { color: var(--aun-heading); font-size: 14px; }
 .upload-progress-text span { color: var(--aun-muted); font-size: 13px; overflow-wrap: anywhere; }
 @media (prefers-reduced-motion: reduce) { .upload-ring.saving { animation-duration: 3s; } }
+
+/* ════════ Phones (≤ 760px) ════════ */
+@media (max-width: 760px) {
+  /* One column. The side assistant used to keep its 270px column even while
+     hidden, squeezing the document page to one word per line. */
+  .workspace-grid:not(.workspace-grid-home):not(.workspace-grid-auth):not(.workspace-grid-chat) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* On a document page the assistant (answers about that document) sits below it. */
+  .workspace-grid:has(.repository-card > dl) .assistant-panel {
+    display: block;
+    position: static;
+  }
+
+  /* Home search: box, then the type filter, then a full-width Search button. */
+  .search-form { grid-template-columns: 20px minmax(0, 1fr); }
+  .search-form > .icon { grid-column: 1; grid-row: 1; }
+  .search-form input { grid-column: 2; grid-row: 1; }
+  .search-form .search-filter { grid-column: 1 / -1; grid-row: 2; width: 100%; }
+  .search-form .button-primary { grid-column: 1 / -1; grid-row: 3; justify-content: center; min-height: 44px; width: 100%; }
+
+  /* Search results: title and details use the full width; % match and View go underneath. */
+  .document-row { align-items: start; grid-template-columns: 34px minmax(0, 1fr); }
+  .document-trailing { grid-column: 2; justify-content: space-between; }
+  .document-trailing .relevance { display: inline; }
+}
+.paper-preview-mobile { align-items: flex-start; background: var(--aun-tint); border: 1px solid var(--aun-border-strong); border-radius: 8px; display: grid; gap: 12px; padding: 16px; }
+.repository-card .paper-preview-mobile p, .app-shell-library .repository-card .paper-preview-mobile p { color: var(--aun-text); margin: 0; }
