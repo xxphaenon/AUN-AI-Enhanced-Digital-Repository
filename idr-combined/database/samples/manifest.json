@@ -1,0 +1,162 @@
+[
+  {
+    "file": "01-smart-drip-irrigation-lorawan.pdf",
+    "title": "Smart Drip Irrigation Controller Using Soil-Moisture Sensors and LoRaWAN",
+    "author": "Ibrahim Musa Danjuma",
+    "courseCode": "CSC 499",
+    "academicYear": "2024/2025",
+    "documentType": "project"
+  },
+  {
+    "file": "02-campusride-shuttle-tracking.pdf",
+    "title": "CampusRide: A Real-Time Shuttle Tracking Mobile Application for the AUN Campus",
+    "author": "Fatima Bello Abubakar",
+    "courseCode": "SEN 499",
+    "academicYear": "2023/2024",
+    "documentType": "project"
+  },
+  {
+    "file": "03-nlp-academic-advising-chatbot.pdf",
+    "title": "An NLP-Powered Chatbot for Undergraduate Academic Advising",
+    "author": "Chukwuemeka David Obi",
+    "courseCode": "CSC 499",
+    "academicYear": "2024/2025",
+    "documentType": "project"
+  },
+  {
+    "file": "04-blockchain-credential-verification.pdf",
+    "title": "Design and Implementation of a Blockchain-Based Academic Credential Verification System",
+    "author": "Ngozi Grace Eze",
+    "courseCode": "SEN 499",
+    "academicYear": "2022/2023",
+    "documentType": "project"
+  },
+  {
+    "file": "05-iot-air-quality-yola.pdf",
+    "title": "A Low-Cost IoT Air Quality Monitoring Network for Yola",
+    "author": "Abdulrahman Sani Garba",
+    "courseCode": "CPE 499",
+    "academicYear": "2025/2026",
+    "documentType": "project"
+  },
+  {
+    "file": "06-mobile-money-adoption-msmes.pdf",
+    "title": "Determinants of Mobile Money Adoption Among Micro and Small Enterprises in Yola North",
+    "author": "Hauwa Ibrahim Lawan",
+    "courseCode": "ECO 499",
+    "academicYear": "2023/2024",
+    "documentType": "research"
+  },
+  {
+    "file": "07-social-media-academic-performance.pdf",
+    "title": "Social Media Use and Academic Performance Among Undergraduate Students at a Private University in North-Eastern Nigeria",
+    "author": "Grace Adaeze Okafor",
+    "courseCode": "CMD 499",
+    "academicYear": "2022/2023",
+    "documentType": "research"
+  },
+  {
+    "file": "08-phishing-awareness-university-staff.pdf",
+    "title": "Phishing Susceptibility and Cybersecurity Awareness Among University Staff: A Simulated Phishing Study",
+    "author": "Yusuf Aliyu Mohammed",
+    "courseCode": "INS 499",
+    "academicYear": "2024/2025",
+    "documentType": "research"
+  },
+  {
+    "file": "09-hausa-sentiment-analysis.pdf",
+    "title": "Sentiment Analysis of Hausa-Language Tweets Using Transfer Learning",
+    "author": "Aisha Umar Bello",
+    "courseCode": "CSC 499",
+    "academicYear": "2025/2026",
+    "documentType": "research"
+  },
+  {
+    "file": "10-ifrs-adoption-financial-reporting-quality.pdf",
+    "title": "The Effect of IFRS Adoption on Financial Reporting Quality of Listed Deposit Money Banks in Nigeria",
+    "author": "Samuel Chinedu Okoro",
+    "courseCode": "ACC 499",
+    "academicYear": "2021/2022",
+    "documentType": "research"
+  },
+  {
+    "file": "11-solar-microgrid-monitoring.pdf",
+    "title": "Design of a Remote Monitoring and Load Management System for a Rural Solar Mini-Grid",
+    "author": "Daniel Bitrus Kwaji",
+    "courseCode": "CPE 499",
+    "academicYear": "2023/2024",
+    "documentType": "project"
+  },
+  {
+    "file": "12-telemedicine-appointment-system.pdf",
+    "title": "MediLink: A Telemedicine and Appointment Booking Platform for Primary Healthcare Centres",
+    "author": "Esther Nanzing Dauda",
+    "courseCode": "SEN 499",
+    "academicYear": "2024/2025",
+    "documentType": "project"
+  },
+  {
+    "file": "13-crop-disease-detection-cnn.pdf",
+    "title": "Detecting Maize Leaf Diseases from Smartphone Images Using Convolutional Neural Networks",
+    "author": "Mohammed Sadiq Haruna",
+    "courseCode": "CSC 499",
+    "academicYear": "2023/2024",
+    "documentType": "research"
+  },
+  {
+    "file": "14-e-learning-adoption-covid.pdf",
+    "title": "Factors Influencing Continued Use of E-Learning Platforms by Nigerian Undergraduates After the COVID-19 Pandemic",
+    "author": "Blessing Ojonugwa Adamu",
+    "courseCode": "INS 499",
+    "academicYear": "2021/2022",
+    "documentType": "research"
+  },
+  {
+    "file": "15-youth-unemployment-entrepreneurship.pdf",
+    "title": "Entrepreneurship Education and Self-Employment Intentions Among Final-Year Students in Adamawa State",
+    "author": "Joshua Elisha Wakili",
+    "courseCode": "BUS 499",
+    "academicYear": "2022/2023",
+    "documentType": "research"
+  },
+  {
+    "file": "16-pharmacy-inventory-system.pdf",
+    "title": "PharmaTrack: A Web-Based Inventory and Expiry Management System for Community Pharmacies",
+    "author": "Rukayya Abdullahi Shehu",
+    "courseCode": "SEN 499",
+    "academicYear": "2025/2026",
+    "documentType": "project"
+  },
+  {
+    "file": "17-network-intrusion-detection-ml.pdf",
+    "title": "Comparative Evaluation of Machine Learning Classifiers for Network Intrusion Detection",
+    "author": "Victor Emeka Nnadi",
+    "courseCode": "CSC 499",
+    "academicYear": "2022/2023",
+    "documentType": "research"
+  },
+  {
+    "file": "18-misinformation-detection-nigerian-news.pdf",
+    "title": "Detecting Misinformation in Nigerian Online News Using Text Classification",
+    "author": "Precious Ifeoma Nwachukwu",
+    "courseCode": "CMD 499",
+    "academicYear": "2024/2025",
+    "documentType": "research"
+  },
+  {
+    "file": "19-hostel-allocation-system.pdf",
+    "title": "Design and Implementation of an Automated Hostel Allocation and Maintenance Request System",
+    "author": "Abubakar Tijjani Saleh",
+    "courseCode": "INS 499",
+    "academicYear": "2021/2022",
+    "documentType": "project"
+  },
+  {
+    "file": "20-rag-question-answering-repository.pdf",
+    "title": "Retrieval-Augmented Question Answering over a University Thesis Repository",
+    "author": "Zainab Kabiru Ahmed",
+    "courseCode": "SEN 499",
+    "academicYear": "2025/2026",
+    "documentType": "research"
+  }
+]

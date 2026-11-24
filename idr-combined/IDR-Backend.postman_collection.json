@@ -1,0 +1,1647 @@
+{
+  "info": {
+    "name": "IDR Backend (Member 3) v2",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "AI-Enhanced Digital Repository API with login, roles and review workflow.\n\n1. Run `php artisan serve` and the queue worker.\n2. Run the two Login requests in '0. Accounts' first: they store adminToken and studentToken.\n3. Run the folders in order. 'Upload' stores the new artifactId for later requests; '5. Admin deletes' removes it again, so the collection can be re-run with the same PDF. Run `php artisan db:seed` to reset the sample documents.\n\nSeeded accounts: admin@aun.edu.ng / student@aun.edu.ng, password Password123."
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:8000/api"
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "studentToken",
+      "value": ""
+    },
+    {
+      "key": "adminId",
+      "value": "66f000000000000000000001"
+    },
+    {
+      "key": "studentId",
+      "value": "66f000000000000000000002"
+    },
+    {
+      "key": "approvedId",
+      "value": "66f0000000000000000000a1",
+      "description": "seeded approved sample"
+    },
+    {
+      "key": "seededPendingId",
+      "value": "66f0000000000000000000a4",
+      "description": "seeded pending sample (uploaded by the student)"
+    },
+    {
+      "key": "artifactId",
+      "value": ""
+    },
+    {
+      "key": "sessionId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Accounts",
+      "item": [
+        {
+          "name": "Login as admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Stores adminToken.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@aun.edu.ng\",\n  \"password\": \"Password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "const d = pm.response.json().data;",
+                  "pm.test('Is admin', () => pm.expect(d.user.role).to.eql('admin'));",
+                  "pm.collectionVariables.set('adminToken', d.token);",
+                  "pm.collectionVariables.set('adminId', d.user.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login as student",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Stores studentToken.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"student@aun.edu.ng\",\n  \"password\": \"Password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "const d = pm.response.json().data;",
+                  "pm.collectionVariables.set('studentToken', d.token);",
+                  "pm.collectionVariables.set('studentId', d.user.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register: non-AUN email is refused (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Only @aun.edu.ng addresses may register.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Kola Ade\",\n  \"email\": \"kola@gmail.com\",\n  \"password\": \"Secret123\",\n  \"password_confirmation\": \"Secret123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 422', () => pm.response.to.have.status(422));",
+                  "pm.test('Explains the domain rule', () => pm.expect(pm.response.json().errors.email[0]).to.include('@aun.edu.ng'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register: new AUN student (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Change the email each time you run it (emails are unique). Any 'role' sent is ignored.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Kola Ade\",\n  \"email\": \"kola.ade{{$randomInt}}@aun.edu.ng\",\n  \"password\": \"Secret123\",\n  \"password_confirmation\": \"Secret123\",\n  \"role\": \"admin\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Always a student', () => pm.expect(pm.response.json().data.user.role).to.eql('student'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login: wrong password (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"student@aun.edu.ng\",\n  \"password\": \"WrongPass1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 422', () => pm.response.to.have.status(422));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Who am I",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{studentToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "",
+      "auth": {
+        "type": "noauth"
+      }
+    },
+    {
+      "name": "1. Student submits",
+      "item": [
+        {
+          "name": "Upload (student \u2192 pending)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/documents/upload",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "documents",
+                "upload"
+              ]
+            },
+            "description": "Pick a PDF in Body \u2192 file. Stores artifactId.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [],
+                  "description": "Click 'Select Files' and pick a PDF"
+                },
+                {
+                  "key": "title",
+                  "value": "Compilers Final Exam",
+                  "type": "text"
+                },
+                {
+                  "key": "courseCode",
+                  "value": "CSC 401",
+                  "type": "text"
+                },
+                {
+                  "key": "academicYear",
+                  "value": "2024/2025",
+                  "type": "text"
+                },
+                {
+                  "key": "author",
+                  "value": "",
+                  "type": "text",
+                  "disabled": true,
+                  "description": "optional"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 202', () => pm.response.to.have.status(202));",
+                  "const d = pm.response.json().data;",
+                  "pm.test('Pending review', () => pm.expect(d.reviewStatus).to.eql('pending'));",
+                  "pm.collectionVariables.set('artifactId', d.artifactId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Processing status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/documents/{{artifactId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "documents",
+                "{{artifactId}}",
+                "status"
+              ]
+            },
+            "description": "Wait a few seconds after uploading: becomes EMBEDDED."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "My submissions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/documents/mine",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "documents",
+                "mine"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Preview my own pending file",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/documents/{{artifactId}}/preview",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "documents",
+                "{{artifactId}}",
+                "preview"
+              ]
+            },
+            "description": "The uploader can see their own pending file."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "",
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{studentToken}}",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "2. Public can't see it yet",
+      "item": [
+        {
+          "name": "Guest preview of pending file (404)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/documents/{{artifactId}}/preview",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "documents",
+                "{{artifactId}}",
+                "preview"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Public search (pending file not listed)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/search?q=compilers final exam",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "compilers final exam"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Not in results', () => pm.expect(pm.response.json().results.map(r => r.artifactId)).to.not.include(pm.collectionVariables.get('artifactId')));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "",
+      "auth": {
+        "type": "noauth"
+      }
+    },
+    {
+      "name": "3. Admin reviews",
+      "item": [
+        {
+          "name": "Pending queue",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/documents/pending",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "documents",
+                "pending"
+              ]
+            },
+            "description": "Oldest first."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Dashboard table (filters)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/documents?status=pending&q=&page=1&perPage=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "documents"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending"
+                },
+                {
+                  "key": "q",
+                  "value": ""
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "perPage",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Try status=pending|approved|rejected, uploadedBy, uploadedFrom/To (YYYY-MM-DD), filename (exact), q."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has tab counts', () => pm.expect(pm.response.json().meta.counts).to.have.keys('pending','approved','rejected'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Filter by uploader",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/documents?uploadedBy={{studentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "documents"
+              ],
+              "query": [
+                {
+                  "key": "uploadedBy",
+                  "value": "{{studentId}}"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin preview (inline)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/documents/{{artifactId}}/preview",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "documents",
+                "{{artifactId}}",
+                "preview"
+              ]
+            },
+            "description": "Read the file before deciding."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Inline', () => pm.expect(pm.response.headers.get('Content-Disposition')).to.match(/^inline/));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin AI search (all statuses)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/search?q=compilers final exam",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "compilers final exam"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Approve",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/documents/{{artifactId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "documents",
+                "{{artifactId}}",
+                "status"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"approved\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Approved', () => pm.expect(pm.response.json().data.reviewStatus).to.eql('approved'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Edit details",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/documents/{{artifactId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "documents",
+                "{{artifactId}}"
+              ]
+            },
+            "description": "Send only what changes. Updates Qdrant without re-embedding.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Compiler Construction Final Exam\",\n  \"courseCode\": \"CSC 402\",\n  \"academicYear\": \"2024/2025\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reject the seeded pending sample (with reason)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/documents/{{seededPendingId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "documents",
+                "{{seededPendingId}}",
+                "status"
+              ]
+            },
+            "description": "The student sees the reason in 'My submissions'.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"rejected\",\n  \"reason\": \"Please upload the full paper, page 2 is missing.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users?role=student",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "role",
+                  "value": "student"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "",
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{adminToken}}",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "4. After approval",
+      "item": [
+        {
+          "name": "Public catalogue",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/documents?courseCode=CSC 402",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "documents"
+              ],
+              "query": [
+                {
+                  "key": "courseCode",
+                  "value": "CSC 402"
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Public preview (no login)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/documents/{{artifactId}}/preview",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "documents",
+                "{{artifactId}}",
+                "preview"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Download without login (401)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/documents/{{artifactId}}/download",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "documents",
+                "{{artifactId}}",
+                "download"
+              ]
+            },
+            "description": "Frontend shows 'Sign in to Download'.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Download as student",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/documents/{{artifactId}}/download",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "documents",
+                "{{artifactId}}",
+                "download"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{studentToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Attachment', () => pm.expect(pm.response.headers.get('Content-Disposition')).to.match(/^attachment/));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Chat about it",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/chat/message",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "chat",
+                "message"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Tell me about the compiler construction exam\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{studentToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('sessionId', pm.response.json().sessionId);"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": ""
+    },
+    {
+      "name": "5. Admin deletes",
+      "item": [
+        {
+          "name": "Delete (MongoDB \u2192 file \u2192 vectors)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/documents/{{artifactId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "documents",
+                "{{artifactId}}"
+              ]
+            },
+            "description": "Permanent."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('All three steps', () => { const s = pm.response.json().data.steps; pm.expect(s.database).to.eql('deleted'); pm.expect(s.file).to.eql('deleted'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Gone (404)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/documents/{{artifactId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "documents",
+                "{{artifactId}}"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "",
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{adminToken}}",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "6. Access control (should fail)",
+      "item": [
+        {
+          "name": "Guest on admin route (401)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/documents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "documents"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Student on admin route (403)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/documents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "documents"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{studentToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Student tries to approve (403)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/documents/{{seededPendingId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "documents",
+                "{{seededPendingId}}",
+                "status"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"approved\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{studentToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Upload without login (401)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/documents/upload",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "documents",
+                "upload"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [],
+                  "description": "Click 'Select Files' and pick a PDF"
+                },
+                {
+                  "key": "title",
+                  "value": "Compilers Final Exam",
+                  "type": "text"
+                },
+                {
+                  "key": "courseCode",
+                  "value": "CSC 401",
+                  "type": "text"
+                },
+                {
+                  "key": "academicYear",
+                  "value": "2024/2025",
+                  "type": "text"
+                },
+                {
+                  "key": "author",
+                  "value": "",
+                  "type": "text",
+                  "disabled": true,
+                  "description": "optional"
+                }
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout student",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Revokes studentToken. Run 'Login as student' again to continue.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{studentToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Revoked token (401)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{studentToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": ""
+    }
+  ]
+}

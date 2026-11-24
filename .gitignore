@@ -1,0 +1,26 @@
+# AUN Digital Repository: repository root
+# Only the backend (idr-combined), the frontend (idr-frontend), start.bat and this README are published.
+# Each project folder also has its own .gitignore.
+
+# Secrets: never publish real settings files (the .env.example templates are kept)
+.env
+.env.*
+!.env.example
+
+# Installed packages and build output (rebuilt with composer install / npm install)
+vendor/
+node_modules/
+.next/
+*.tsbuildinfo
+
+# Uploaded documents, logs and caches
+idr-combined/storage/app/private/artifacts/
+*.log
+.phpunit.result.cache
+
+# Editor and system files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+~$*
